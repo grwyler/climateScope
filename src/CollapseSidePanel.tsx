@@ -72,6 +72,9 @@ const useCollapseSidePanelState = ({
   // Boolean indicating whether the chart legend is collapsed or expanded
   const [collapsed, setCollapsed] = useState<boolean>(false);
 
+  // This constant variable 'originalFormat' is assigned the value returned by the 'getYearWithFractionalMonth' function,
+  // which takes in a dateString parameter and returns the year with fractional month extracted from it (eg. 2008.21 => 05/01/2008).
+  // This is used for searching the temperature data record that matches the selected date.
   const originalFormat = getYearWithFractionalMonth(dateString);
 
   /**
