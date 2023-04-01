@@ -1,6 +1,6 @@
-import React from "react";
+import React, { ReactNode } from "react";
 import { Range } from "react-range";
-import { valuesToDates, dateToValue, getMinMaxDates } from "./utils";
+import { valuesToDates, getMinMaxDates } from "./utils";
 
 interface TimeSliderProps {
   timeArray: Date[];
@@ -26,13 +26,19 @@ function TimeSlider({
         min={0}
         max={1}
         values={values}
-        onChange={(values) => {
+        onChange={(values: React.SetStateAction<number[]>) => {
           setValues(values);
           setDateString(
             valuesToDates(values, minDate, maxDate)[0].toLocaleDateString()
           );
         }}
-        renderTrack={({ props, children }) => (
+        renderTrack={({
+          props,
+          children,
+        }: {
+          props: { style: object };
+          children: ReactNode;
+        }) => (
           <div
             {...props}
             style={{
@@ -46,7 +52,7 @@ function TimeSlider({
             {children}
           </div>
         )}
-        renderThumb={({ props }) => (
+        renderThumb={({ props }: { props: { style: object } }) => (
           <div
             {...props}
             style={{
