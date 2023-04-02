@@ -15,7 +15,7 @@ const CollapseSidePanel = (props: CollapseSidePanelProps) => {
     <div style={{ zIndex: 500, position: "absolute", top: 100, left: 10 }}>
       <button className="btn btn-light mb-2" onClick={toggleCollapse}>
         {collapsed ? (
-          <i className="fa fa-chevron-right" />
+          <i className="fa fa-info text-primary" />
         ) : (
           <i className="fa fa-chevron-left" />
         )}
@@ -70,7 +70,7 @@ const useCollapseSidePanelState = ({
   const [landTemp, setLandTemp] = useState<string>("0.14");
 
   // Boolean indicating whether the chart legend is collapsed or expanded
-  const [collapsed, setCollapsed] = useState<boolean>(false);
+  const [collapsed, setCollapsed] = useState<boolean>(true);
 
   // This constant variable 'originalFormat' is assigned the value returned by the 'getYearWithFractionalMonth' function,
   // which takes in a dateString parameter and returns the year with fractional month extracted from it (eg. 2008.21 => 05/01/2008).
