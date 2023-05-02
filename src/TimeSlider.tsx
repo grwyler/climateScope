@@ -26,7 +26,7 @@ function TimeSlider({
         min={0}
         max={1}
         values={values}
-        onChange={(values: React.SetStateAction<number[]>) => {
+        onChange={(values: number[]) => {
           setValues(values);
           setDateString(
             valuesToDates(values, minDate, maxDate)[0].toLocaleDateString()

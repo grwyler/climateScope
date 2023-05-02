@@ -34,3 +34,11 @@ export interface Leader {
 export interface Relations {
   [key: string]: number;
 }
+
+export interface SpeciesTraits {
+  intelligence: number;
+  good: number;
+  evil: number;
+  power: number;
+  description: string;
+}

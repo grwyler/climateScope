@@ -7,37 +7,119 @@ import ruBoundaries from "../../public/ru_boundary.json";
 import braBoundaries from "../../public/bra_boundary.json";
 import inBoundaries from "../../public/in_boundary.json";
 import jpBoundaries from "../../public/jp_boundary.json";
-import { Leader } from "../tpyes";
+import { Leader, SpeciesTraits } from "../tpyes";
 import { leaderData } from "../utils";
 import Accordion from "./Accordion";
 import { Configuration, OpenAIApi } from "openai";
 
 interface MessageLog {
   message: string;
-  response: string;
+  response: string | null;
 }
 
+interface GeoJSON {
+  type?: string;
+  features?:
+    | {
+        type: string;
+        properties: { TYPE: string; R_STATEFP: string; L_STATEFP: string };
+        geometry: { type: string; coordinates: number[][] };
+      }[]
+    | {
+        type: string;
+        geometry: { type: string; coordinates: number[][][][] };
+        properties: {
+          shapeName: string;
+          shapeISO: string;
+          shapeID: string;
+          shapeGroup: string;
+          shapeType: string;
+        };
+      }[]
+    | {
+        type: string;
+        geometry: { type: string; coordinates: number[][][][] };
+        properties: {
+          shapeName: string;
+          shapeISO: string;
+          shapeID: string;
+          shapeGroup: string;
+          shapeType: string;
+        };
+      }[];
+}
+
+const species: { [key: string]: SpeciesTraits } = {
+  Xalaxians: {
+    intelligence: 100,
+    good: 100,
+    evil: 0,
+    power: 100,
+    description:
+      "The Xalaxians are an advanced alien race with telepathic abilities, shimmering silver skin, and glowing blue eyes. They possess advanced technology, including interdimensional travel and the ability to harness black hole energy. Unlike humans, they see themselves as stewards of the universe and have no interest in dominating other species, including humans. They recently moved their ship into Earth's orbit, intentionally making it visible to humans in order to make contact. The ship is approximately the size of New Jersey. The Xalaxians seek to help all life on Earth flourish, and news of their presence has quickly spread around the world. People around the globe are anxiously awaiting to see if they will make contact or pose a threat.",
+  },
+  Zorans: {
+    intelligence: 90,
+    good: 50,
+    evil: 50,
+    power: 80,
+    description:
+      "The Zorans are a humanoid alien species with blue skin and a strong, muscular build. They possess advanced technology that allows them to travel through space and time. While they have a reputation for being aggressive and warlike, they are also fiercely loyal to their own kind and will do whatever it takes to protect their own. They have a complex social hierarchy and value strength and power above all else. Despite their aggressive tendencies, they are not necessarily evil, but rather have a strong sense of survival and self-preservation. The Zorans have been known to make contact with other species, but often come into conflict with them due to their territorial nature.",
+  },
+  Zorathians: {
+    intelligence: 95,
+    good: 50,
+    evil: 50,
+    power: 85,
+    description:
+      "The Zorathians are a humanoid species with green skin and elongated fingers. They possess advanced technology, including powerful energy weapons and the ability to manipulate gravity. The Zorathians are divided into two factions, one which seeks to conquer other planets and enslave their inhabitants, and the other which seeks to establish peaceful relations with other species. Both factions are highly skilled in combat, making the Zorathians a formidable opponent in any conflict. The Zorathians have been known to travel in large fleets of ships, often attacking unprovoked. However, some members of the species have shown a willingness to negotiate and work towards peaceful coexistence with other species.",
+  },
+  Gorgorians: {
+    intelligence: 70,
+    good: 0,
+    evil: 100,
+    power: 90,
+    description:
+      "The Gorgorians are a highly aggressive and war-like alien species. They are tall and muscular, with gray skin and glowing red eyes. Their main goal is to conquer other worlds and enslave the inhabitants for their own use. They possess highly advanced weapons technology, including energy blasters and shield generators. Unlike the Xalaxians, the Gorgorians have no interest in coexisting with other species and seek to dominate all they encounter. They travel through space in massive warships, capable of destroying entire planets. The Gorgorians recently arrived in the Milky Way and have set their sights on Earth as their next conquest.",
+  },
+  Krynnians: {
+    intelligence: 90,
+    good: 80,
+    evil: 20,
+    power: 70,
+    description:
+      "The Krynnians are a peaceful alien species with a deep connection to nature. They possess incredible knowledge of botany and have the ability to communicate with plants. Their skin is a deep shade of green and they have large, luminous eyes. The Krynnians live in harmony with the environment and do not believe in exploiting natural resources for their own gain. They are highly skilled in healing and have developed advanced medical technology, which they use to help other species. Despite their peaceful nature, the Krynnians are fiercely protective of their home planet and will defend it against any perceived threats.",
+  },
+};
+
+process.env.OPENAI_API_KEY =
+  "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";
 const configuration = new Configuration({
   organization: "org-7I99Yz2EvJQXM3L3JeCjpgoa",
-  apiKey: "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",
+  apiKey: process.env.OPENAI_API_KEY,
 });
 
 let conversationHistory: string[] = [];
 
-async function sendMessageToChatGPT(message: string, leader: string) {
-  const context =
-    "The Xalaxians are an advanced alien race with telepathic abilities, shimmering silver skin, and glowing blue eyes. They possess advanced technology, including interdimensional travel and the ability to harness black hole energy. Unlike humans, they see themselves as stewards of the universe and have no interest in dominating other species, including humans. They recently moved their ship into Earth's orbit, intentionally making it visible to humans in order to make contact. The ship is approximately the size of New Jersey. The Xalaxians seek to help all life on Earth flourish, and news of their presence has quickly spread around the world. People around the globe are anxiously awaiting to see if they will make contact or pose a threat. The people of Earth know absolutely nothing about the aliens. When they do finally decide to make contact, it will be the very first interaction so they should not have any knowledge of anything mentioned previously about the Xalaxians.";
-
+async function sendMessageToChatGPT(
+  message: string,
+  leader: string,
+  speciesTraits: SpeciesTraits | undefined
+) {
+  let context = "";
+  if (speciesTraits) {
+    context = speciesTraits.description;
+  }
   const prompt =
     context +
     conversationHistory.join("") +
-    " The Xalaxian emissary decides to contact " +
+    ` The Alien emissary decides to contact ` +
     leader +
-    " The message reads: " +
+    ' The message reads: "' +
     message +
-    " Respond as " +
+    '" Respond as ' +
     leader;
-
+  debugger;
   const openai = new OpenAIApi(configuration);
   const completion = await openai.createCompletion({
     model: "text-davinci-003",
@@ -52,8 +134,8 @@ async function sendMessageToChatGPT(message: string, leader: string) {
 
   const response = completion.data.choices[0].text;
   if (response) {
-    const trimmedResponse = response.substr(response.lastIndexOf(":") + 1);
-    conversationHistory.push("Xalaxian emissary: " + message);
+    const trimmedResponse = response.substring(response.lastIndexOf(":") + 1);
+    conversationHistory.push(`Alien emissary: ` + message);
     conversationHistory.push(leader + ": " + trimmedResponse);
     return trimmedResponse;
   } else {
@@ -72,14 +154,23 @@ const MapComponent = () => {
   const [message, setMessage] = useState("");
   const [messageLog, setMessageLog] = useState<MessageLog[]>([]);
   const chatLogRef = useRef<HTMLDivElement>(null);
+  const [isWelcome, setIsWelcome] = useState<boolean>(true);
+  const [selectedSpecies, setSpecies] = useState<SpeciesTraits>();
   useEffect(() => {
     const start = Cesium.JulianDate.fromDate(new Date());
     // Create the Cesium Viewer
     const cesiumViewer = new Cesium.Viewer("cesiumContainer", {
-      shouldAnimate: true, // Enable animations
+      shouldAnimate: true,
       shadows: true,
-      terrain: Cesium.Terrain.fromWorldTerrain(),
     });
+
+    cesiumViewer.scene.globe.enableLighting = true;
+
+    const terrainProvider = new Cesium.CesiumTerrainProvider({
+      url: Cesium.IonResource.fromAssetId(1),
+    });
+
+    cesiumViewer.terrainProvider = terrainProvider;
     cesiumViewer.scene.globe.enableLighting = true;
 
     //Make sure viewer is at the desired time.
@@ -97,9 +188,12 @@ const MapComponent = () => {
     const pitch = 0;
     const roll = 0;
     const hpr = new Cesium.HeadingPitchRoll(heading, pitch, roll);
-    const orientation = Cesium.Transforms.headingPitchRollQuaternion(
-      position,
-      hpr
+    // const orientation = Cesium.Transforms.headingPitchRollQuaternion(
+    //   position,
+    //   hpr
+    // );
+    const orientation = new Cesium.ConstantProperty(
+      Cesium.Transforms.headingPitchRollQuaternion(position, hpr)
     );
     const entity = cesiumViewer.entities.add({
       name: url,
@@ -218,7 +312,7 @@ const MapComponent = () => {
         },
       ]);
       setMessage("");
-      sendMessageToChatGPT(message, highlightedLeader)
+      sendMessageToChatGPT(message, highlightedLeader, selectedSpecies)
         .then((response) => {
           if (response) {
             // Display response in a new dialog box
@@ -234,9 +328,29 @@ const MapComponent = () => {
         .catch((error) => {
           // Handle error here
           console.error(error);
+          debugger;
+          setMessageLog([
+            ...messageLog,
+            {
+              message,
+              response: null,
+            },
+          ]);
         });
     }
   }
+  const showWelcome = () => {
+    setIsWelcome(true);
+  };
+
+  const closeWelcome = () => {
+    setIsWelcome(false);
+  };
+
+  const handleSelectSpecies = (name: string) => {
+    setSpecies(species[name]);
+    setIsWelcome(false);
+  };
   return (
     <div style={{ position: "relative" }}>
       <div
@@ -314,7 +428,15 @@ const MapComponent = () => {
               <div key={index}>
                 <p>You: {item.message}</p>
                 <p>
-                  {leaders[highlightedLeader]?.name}: {item.response}
+                  {item.response ? (
+                    <>
+                      {leaders[highlightedLeader]?.name}: {item.response}
+                    </>
+                  ) : (
+                    <div className="text-danger">
+                      Error making contact. Try again later
+                    </div>
+                  )}
                 </p>
               </div>
             ))}
@@ -344,11 +466,34 @@ const MapComponent = () => {
           </Button>
         </Modal.Footer>
       </Modal>
+      <Modal variant="dark" show={isWelcome}>
+        <Modal.Body className="bg-dark text-light">
+          <div>
+            <h2>Select a Species:</h2>
+            {Object.keys(species).map((name) => (
+              <Card
+                className="bg-dark text-light m-2 border-secondary"
+                key={name}
+                style={{ cursor: "pointer" }}
+                onClick={() => handleSelectSpecies(name)}
+              >
+                <Card.Header>{name}</Card.Header>
+                <Card.Body className="d-flex justify-content-between">
+                  <span>evil: {species[name].evil}</span>
+                  <span>good: {species[name].good}</span>
+                  <span>power: {species[name].power}</span>
+                  <span>intelligence: {species[name].intelligence}</span>
+                </Card.Body>
+              </Card>
+            ))}
+          </div>
+        </Modal.Body>
+      </Modal>
     </div>
   );
 };
 
-const getDataSource = (json) => {
+const getDataSource = (json: GeoJSON) => {
   const dataSource = new Cesium.GeoJsonDataSource("boundaries");
   dataSource.load(json, {
     stroke: Cesium.Color.WHITE,

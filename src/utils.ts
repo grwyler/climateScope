@@ -1,22 +1,22 @@
 // Importing the scaleLinear function from d3-scale module
-import { scaleLinear } from "d3-scale";
+import { NumberValue, scaleLinear } from "d3-scale";
 import { Leader, Relations } from "./tpyes";
 
 // Function to convert a date object to a value between 0 and 1 based on the min and max values
-export const dateToValue = (date, min, max) => {
+export const dateToValue = (date: Date, min: number, max: number) => {
   return scaleLinear([min, max], [0, 1])(date.getTime());
 };
 
 // Function to convert an array of values between 0 and 1 to an array of Date objects based on the min and max values
-export const valuesToDates = (values, min, max) => {
-  return values.map((value) => {
+export const valuesToDates = (values: number[], min: number, max: number) => {
+  return values.map((value: number) => {
     const date = new Date(scaleLinear([0, 1], [min, max])(value));
     return date;
   });
 };
 
 // Function to get the minimum and maximum dates from an array of date objects
-export const getMinMaxDates = (timeArray) => {
+export const getMinMaxDates = (timeArray: string | any[]) => {
   const minDate = timeArray.length > 0 ? timeArray[0].getTime() : null;
   const maxDate =
     timeArray.length > 0 ? timeArray[timeArray.length - 1].getTime() : null;
@@ -24,19 +24,20 @@ export const getMinMaxDates = (timeArray) => {
 };
 
 // Function to get the year with fractional month from a date string in the format "MM/DD/YYYY"
-export const getYearWithFractionalMonth = (dateString) => {
-  const [month, day, year] = dateString.split("/");
+export const getYearWithFractionalMonth = (dateString: string): string => {
+  const [month, day, year]: string[] = dateString.split("/");
   // Calculate the fractional month by dividing the day by the number of days in the month
-  const fractionalMonth = (day - 1) / new Date(year, month, 0).getDate();
+  const fractionalMonth: number =
+    (Number(day) - 1) / new Date(Number(year), Number(month), 0).getDate();
   // Combine the year and fractional month into a single value
-  const yearWithFractionalMonth = (Number(year) + fractionalMonth)
+  const yearWithFractionalMonth: string = (Number(year) + fractionalMonth)
     .toFixed(2)
     .toString();
   return yearWithFractionalMonth === "NaN" ? "" : yearWithFractionalMonth;
 };
 
 // Function to convert a temperature value in celsius to fahrenheit
-export const celciusToFernheit = (celsiusString) => {
+export const celciusToFernheit = (celsiusString: string) => {
   const celsius = parseFloat(celsiusString);
   const fahrenheit = (celsius * 9) / 5 + 32;
   return fahrenheit.toFixed(2); // Round to 2 decimal places
