@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://earth.google.com/kml/2.1">
+  <Folder>
+    <open>1</open>
+    <name>Tectonic Plates and Plate Boundaries</name>
+    <description>The Earth's crust is constantly in motion.  Sections of the crust, called plates, push against each other due to forces from the molten interior of the Earth.  The areas where these plates collide often have increased volcanic and earthquake activity.  These images show the locations of the plates and their boundaries in the Earth's crust.  Convergent boundaries are areas where two plates are pushing against each other and one plate may be subducting under another.  Divergent boundaries have two plates pulling away from each other and indicate regions where new land could be created.  Transform boundaries are places where two plates are sliding against each other in opposite directions, and diffuse boundaries are places where two plates have the same relative motion.  Numerous small microplates have been omitted from the plate image.  These images have been derived from images made available by the United States Geological Survey's Earthquake Hazards Program.</description>
+    <GroundOverlay>
+      <name>Still Image (1024x512)</name>
+      <description>This image shows the plate boundaries in the Earth's crust.  It is meant to be overlaid on a background image of the world, such as the image below.</description>
+      <visibility>1</visibility>
+      <drawOrder>1</drawOrder>
+      <Icon>
+        <href>http://svs.gsfc.nasa.gov/vis/a000000/a002900/a002953/bmplates.png</href>
+      </Icon>
+      <LatLonBox>
+        <south>-90</south>
+        <north>90</north>
+        <west>-180</west>
+        <east>180</east>
+      </LatLonBox>
+    </GroundOverlay>
+    <GroundOverlay>
+      <name>Still Image (1024x512)</name>
+      <description>An image of the Earth's major tectonic plates.</description>
+      <visibility>0</visibility>
+      <drawOrder>1</drawOrder>
+      <Icon>
+        <href>http://svs.gsfc.nasa.gov/vis/a000000/a002900/a002953/plates.png</href>
+      </Icon>
+      <LatLonBox>
+        <south>-90</south>
+        <north>90</north>
+        <west>-180</west>
+        <east>180</east>
+      </LatLonBox>
+    </GroundOverlay>
+    <ScreenOverlay>
+      <overlayXY x="1" y="0" xunits="fraction" yunits="fraction"/>
+      <screenXY x="30" y="100" xunits="insetPixels" yunits="pixels"/>
+      <name>Legend</name>
+      <visibility>1</visibility>
+      <drawOrder>3</drawOrder>
+      <Icon>
+        <href>http://svs.gsfc.nasa.gov/vis/a000000/a002900/a002953/platelegend.png</href>
+      </Icon>
+    </ScreenOverlay>
+    <ScreenOverlay>
+      <overlayXY x="1" y="0" xunits="fraction" yunits="fraction"/>
+      <screenXY x="30" y="220" xunits="insetPixels" yunits="pixels"/>
+      <name>Legend</name>
+      <visibility>1</visibility>
+      <drawOrder>3</drawOrder>
+      <Icon>
+        <href>http://svs.gsfc.nasa.gov/vis/a000000/a002900/a002953/legend.png</href>
+      </Icon>
+    </ScreenOverlay>
+  </Folder>
+</kml>

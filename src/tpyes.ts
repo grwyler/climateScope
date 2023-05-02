@@ -21,3 +21,16 @@ export interface CollapseSidePanelProps {
   tempData: TempData[];
   dateString: string;
 }
+
+export interface Leader {
+  name: string;
+  flag: string;
+  power: number;
+  latitude: number;
+  longitude: number;
+  relations: {};
+}
+
+export interface Relations {
+  [key: string]: number;
+}
