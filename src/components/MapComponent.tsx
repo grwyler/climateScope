@@ -11,6 +11,7 @@ import { Leader, SpeciesTraits } from "../tpyes";
 import { leaderData } from "../utils";
 import Accordion from "./Accordion";
 import { Configuration, OpenAIApi } from "openai";
+import axios from "axios";
 
 interface MessageLog {
   message: string;
@@ -92,8 +93,6 @@ const species: { [key: string]: SpeciesTraits } = {
   },
 };
 
-process.env.OPENAI_API_KEY =
-  "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";
 const configuration = new Configuration({
   organization: "org-7I99Yz2EvJQXM3L3JeCjpgoa",
   apiKey: process.env.OPENAI_API_KEY,
@@ -119,7 +118,6 @@ async function sendMessageToChatGPT(
     message +
     '" Respond as ' +
     leader;
-  debugger;
   const openai = new OpenAIApi(configuration);
   const completion = await openai.createCompletion({
     model: "text-davinci-003",
@@ -142,6 +140,35 @@ async function sendMessageToChatGPT(
     return "";
   }
 }
+async function getImageFromOpenAI(
+  setIsNews: Function,
+  setNewsImage: Function,
+  highlightedLeader: string
+) {
+  axios({
+    method: "post",
+    url: "https://api.openai.com/v1/images/generations",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+    },
+    data: {
+      prompt: `The ${highlightedLeader}'s headquarters city destroyed`,
+      n: 1,
+      size: "512x512",
+      response_format: "url",
+    },
+  })
+    .then((response) => {
+      debugger;
+      const imageUrl = response.data.data[0].url;
+      setNewsImage(imageUrl);
+      setIsNews(true);
+    })
+    .catch((error) => {
+      console.error(error);
+    });
+}
 const MapComponent = () => {
   const [water, setWater] = useState(50.0);
   const [waterMax, setWaterMax] = useState(50.0);
@@ -156,6 +183,54 @@ const MapComponent = () => {
   const chatLogRef = useRef<HTMLDivElement>(null);
   const [isWelcome, setIsWelcome] = useState<boolean>(true);
   const [selectedSpecies, setSpecies] = useState<SpeciesTraits>();
+  const [isNews, setIsNews] = useState<boolean>(false);
+  const [newsImage, setNewsImage] = useState<string>("");
+  const [showHUD, setShowHUD] = useState<boolean>(true);
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [showInstructions, setShowInstructions] = useState(false);
+  const pointerStyle = {
+    position: "absolute",
+    top: mousePosition.y - 50,
+    left: mousePosition.x - 50,
+    width: "100px",
+    height: "100px",
+    background:
+      "url(https://example.com/alien-pointer.png) center center no-repeat",
+    backgroundSize: "contain",
+    pointerEvents: "none",
+  };
+
+  const instructionsStyle = {
+    position: "absolute",
+    top: mousePosition.y - 75,
+    left: mousePosition.x + 100,
+    width: "200px",
+    height: "50px",
+    backgroundColor: "rgba(255, 255, 255, 0.8)",
+    borderRadius: "5px",
+    padding: "10px",
+    display: showInstructions ? "block" : "none",
+    pointerEvents: "none",
+  };
+
+  const handleMouseEnter = () => {
+    setShowInstructions(true);
+  };
+
+  const handleMouseLeave = () => {
+    setShowInstructions(false);
+  };
+
+  const handleMouseMove = (event: { clientX: any; clientY: any }) => {
+    setMousePosition({ x: event.clientX, y: event.clientY });
+  };
+  useEffect(() => {
+    document.addEventListener("mousemove", handleMouseMove);
+
+    return () => {
+      document.removeEventListener("mousemove", handleMouseMove);
+    };
+  }, []);
   useEffect(() => {
     const start = Cesium.JulianDate.fromDate(new Date());
     // Create the Cesium Viewer
@@ -297,11 +372,33 @@ const MapComponent = () => {
       chatLogRef.current.scrollTop = chatLogRef.current.scrollHeight;
     }
   }, [messageLog]);
-  function handleButtonClick() {
+  function handleMakeContact() {
     setShowModal(true);
     setMessage("");
     setMessageLog([]);
   }
+
+  function handleLaunchMissile() {
+    const action =
+      "** the aliens launch a missile at Earth, killing 1 million of the " +
+      highlightedLeader +
+      "'s people **";
+    sendMessageToChatGPT(action, highlightedLeader, selectedSpecies)
+      .then((response) => {
+        if (response) {
+          getImageFromOpenAI(setIsNews, setNewsImage, highlightedLeader);
+          setMessage(response);
+        }
+      })
+      .catch((error) => {
+        // Handle error here
+        console.error(error);
+      });
+  }
+  // function handleLaunchMissile() {
+  //   setShowHUD(false);
+  // }
+
   function handleSendMessage(highlightedLeader: string) {
     if (message) {
       setMessageLog([
@@ -328,7 +425,6 @@ const MapComponent = () => {
         .catch((error) => {
           // Handle error here
           console.error(error);
-          debugger;
           setMessageLog([
             ...messageLog,
             {
@@ -339,156 +435,229 @@ const MapComponent = () => {
         });
     }
   }
-  const showWelcome = () => {
-    setIsWelcome(true);
-  };
-
-  const closeWelcome = () => {
-    setIsWelcome(false);
-  };
 
   const handleSelectSpecies = (name: string) => {
     setSpecies(species[name]);
     setIsWelcome(false);
   };
   return (
-    <div style={{ position: "relative" }}>
+    <div>
       <div
         id="cesiumContainer"
         style={{ width: "100%", height: "100vh" }}
-      ></div>
-
-      <Card
-        className="bg-dark text-light"
-        style={{ position: "absolute", left: 5, top: 5 }}
+        onMouseMove={handleMouseMove}
       >
-        <Card.Body>
-          <Row>
-            <Col>
-              <strong>Resource</strong>
-            </Col>
-            <Col>
-              <strong>Storage</strong>
-            </Col>
-            <Col>
-              <strong>Max</strong>
-            </Col>
-          </Row>
-          <Row className="text-end">
-            <Col style={{ color: "lightblue" }}>Water</Col>
-            <Col
+        <div
+          style={{
+            position: "fixed",
+            top: mousePosition.y - 25,
+            left: mousePosition.x - 25,
+            width: "50px",
+            height: "50px",
+            border: "3px solid white",
+            borderRadius: "50%",
+            pointerEvents: "none",
+            zIndex: 999999,
+          }}
+        >
+          {!showHUD && (
+            <div
+              className="text-muted"
               style={{
-                color: `${
-                  water < 10 ? "red" : water < 25 ? "yellow" : "white"
-                }`,
+                position: "fixed",
+                top: mousePosition.y + 110,
+                left: mousePosition.x - 70,
+                pointerEvents: "none",
+                zIndex: 999999,
               }}
             >
-              {water.toFixed(2)} t
-            </Col>
-            <Col>{waterMax} t</Col>
-          </Row>
-        </Card.Body>
-      </Card>
-      <Card
-        className="bg-dark text-light"
-        style={{
-          position: "fixed",
-          left: 5,
-          top: 100,
-          maxHeight: window.innerHeight - 300 + "px",
-          overflowY: "scroll",
-        }}
-      >
-        {Object.entries(leaders).map(([role, leader], index) => (
-          <Accordion
-            key={index}
-            title={role}
-            content={
-              <>
-                <Card.Body>
-                  <p>{leader.name}</p>
-                  <Button onClick={handleButtonClick}>Make Contact</Button>
-                </Card.Body>
-              </>
-            }
-            leader={leader}
-            setHighlightedLeader={setHighlightedLeader}
-            highlightedLeader={highlightedLeader}
-            setPosition={setPosition}
+              Right Click to Cancel
+            </div>
+          )}
+          <div
+            style={{
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              width: "100px",
+              height: "2px",
+
+              backgroundColor: "white",
+              transform: "translate(-50%, -50%)",
+            }}
           />
-        ))}
-      </Card>
-      <Modal show={showModal} onHide={() => setShowModal(false)}>
-        <Modal.Header closeButton className="bg-dark text-light">
-          <Modal.Title>Send Message</Modal.Title>
-        </Modal.Header>
-        <Modal.Body className="bg-dark text-light">
-          <div style={{ maxHeight: 400, overflowY: "scroll" }} ref={chatLogRef}>
-            {messageLog.map((item, index) => (
-              <div key={index}>
-                <p>You: {item.message}</p>
-                <p>
-                  {item.response ? (
-                    <>
-                      {leaders[highlightedLeader]?.name}: {item.response}
-                    </>
-                  ) : (
-                    <div className="text-danger">
-                      Error making contact. Try again later
-                    </div>
-                  )}
-                </p>
-              </div>
-            ))}
-          </div>
-          <Form className="bg-dark text-light">
-            <Form.Group controlId="message">
-              <Form.Label>Message</Form.Label>
-              <Form.Control
-                className="bg-dark text-light"
-                as="textarea"
-                rows={3}
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-              />
-            </Form.Group>
-          </Form>
-        </Modal.Body>
-        <Modal.Footer className="bg-dark text-light">
-          <Button variant="secondary" onClick={() => setShowModal(false)}>
-            Cancel
-          </Button>
-          <Button
-            variant="primary"
-            onClick={() => handleSendMessage(leaders[highlightedLeader]?.name)}
+          <div
+            style={{
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              width: "2px",
+              height: "100px",
+              backgroundColor: "white",
+              transform: "translate(-50%, -50%)",
+            }}
+          />
+        </div>
+      </div>
+      {showHUD && (
+        <>
+          <Card
+            className="bg-dark text-light"
+            style={{ position: "absolute", left: 5, top: 5 }}
           >
-            Send
-          </Button>
-        </Modal.Footer>
-      </Modal>
-      <Modal variant="dark" show={isWelcome}>
-        <Modal.Body className="bg-dark text-light">
-          <div>
-            <h2>Select a Species:</h2>
-            {Object.keys(species).map((name) => (
-              <Card
-                className="bg-dark text-light m-2 border-secondary"
-                key={name}
-                style={{ cursor: "pointer" }}
-                onClick={() => handleSelectSpecies(name)}
-              >
-                <Card.Header>{name}</Card.Header>
-                <Card.Body className="d-flex justify-content-between">
-                  <span>evil: {species[name].evil}</span>
-                  <span>good: {species[name].good}</span>
-                  <span>power: {species[name].power}</span>
-                  <span>intelligence: {species[name].intelligence}</span>
-                </Card.Body>
-              </Card>
+            <Card.Body>
+              <Row>
+                <Col>
+                  <strong>Resource</strong>
+                </Col>
+                <Col>
+                  <strong>Storage</strong>
+                </Col>
+                <Col>
+                  <strong>Max</strong>
+                </Col>
+              </Row>
+              <Row className="text-end">
+                <Col style={{ color: "lightblue" }}>Water</Col>
+                <Col
+                  style={{
+                    color: `${
+                      water < 10 ? "red" : water < 25 ? "yellow" : "white"
+                    }`,
+                  }}
+                >
+                  {water.toFixed(2)} t
+                </Col>
+                <Col>{waterMax} t</Col>
+              </Row>
+            </Card.Body>
+          </Card>
+          <Card
+            className="bg-dark text-light"
+            style={{
+              position: "fixed",
+              left: 5,
+              top: 100,
+              maxHeight: window.innerHeight - 300 + "px",
+              overflowY: "scroll",
+            }}
+          >
+            {Object.entries(leaders).map(([role, leader], index) => (
+              <Accordion
+                key={index}
+                title={role}
+                content={
+                  <>
+                    <Card.Body className="m-2">
+                      <p>{leader.name}</p>
+                      <Button onClick={handleMakeContact}>Make Contact</Button>
+                      <Button variant="danger" onClick={handleLaunchMissile}>
+                        Launch Missile
+                      </Button>
+                    </Card.Body>
+                  </>
+                }
+                leader={leader}
+                setHighlightedLeader={setHighlightedLeader}
+                highlightedLeader={highlightedLeader}
+                setPosition={setPosition}
+              />
             ))}
-          </div>
-        </Modal.Body>
-      </Modal>
+          </Card>
+          <Modal show={showModal} onHide={() => setShowModal(false)}>
+            <Modal.Header closeButton className="bg-dark text-light">
+              <Modal.Title>Send Message</Modal.Title>
+            </Modal.Header>
+            <Modal.Body className="bg-dark text-light">
+              <div
+                style={{ maxHeight: 400, overflowY: "scroll" }}
+                ref={chatLogRef}
+              >
+                {messageLog.map((item, index) => (
+                  <div key={index}>
+                    <p>You: {item.message}</p>
+                    <p>
+                      {item.response ? (
+                        <>
+                          {leaders[highlightedLeader]?.name}: {item.response}
+                        </>
+                      ) : (
+                        <div className="text-danger">
+                          Error making contact. Try again later
+                        </div>
+                      )}
+                    </p>
+                  </div>
+                ))}
+              </div>
+              <Form className="bg-dark text-light">
+                <Form.Group controlId="message">
+                  <Form.Label>Message</Form.Label>
+                  <Form.Control
+                    className="bg-dark text-light"
+                    as="textarea"
+                    rows={3}
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                  />
+                </Form.Group>
+              </Form>
+            </Modal.Body>
+            <Modal.Footer className="bg-dark text-light">
+              <Button variant="secondary" onClick={() => setShowModal(false)}>
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                onClick={() =>
+                  handleSendMessage(leaders[highlightedLeader]?.name)
+                }
+              >
+                Send
+              </Button>
+            </Modal.Footer>
+          </Modal>
+          <Modal variant="dark" show={isWelcome}>
+            <Modal.Body className="bg-dark text-light">
+              <div>
+                <h2>Select a Species:</h2>
+                {Object.keys(species).map((name) => (
+                  <Card
+                    className="bg-dark text-light m-2 border-secondary"
+                    key={name}
+                    style={{ cursor: "pointer" }}
+                    onClick={() => handleSelectSpecies(name)}
+                  >
+                    <Card.Header>{name}</Card.Header>
+                    <Card.Body className="d-flex justify-content-between">
+                      <span>evil: {species[name].evil}</span>
+                      <span>good: {species[name].good}</span>
+                      <span>power: {species[name].power}</span>
+                      <span>intelligence: {species[name].intelligence}</span>
+                    </Card.Body>
+                  </Card>
+                ))}
+              </div>
+            </Modal.Body>
+          </Modal>
+          <Modal show={isNews}>
+            <Modal.Body
+              className="bg-dark text-light"
+              style={{ maxWidth: "100%" }}
+            >
+              <img src={newsImage} alt="News" />
+              <h3>
+                Beijing is destroyed by massive explosion, initial estimates say
+                over 1 million killed
+              </h3>
+              <p>{`"${message}" \n -${leaders[highlightedLeader]?.name}`}</p>
+            </Modal.Body>
+            <Modal.Footer className="bg-dark text-light">
+              <Button onClick={() => setIsNews(false)}>Close</Button>
+            </Modal.Footer>
+          </Modal>
+        </>
+      )}
     </div>
   );
 };

@@ -114,3 +114,44 @@ a {
   background-color: #555;
   border-radius: 10px;
 }
+
+/* Hide the default cursor */
+html,
+body {
+  cursor: none;
+}
+
+/* Create the AC-130 gunship aiming sight */
+/* html::before {
+  content: "";
+  display: block;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: 50px;
+  height: 50px;
+  margin: -25px 0 0 -25px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 0 100vmax rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+  z-index: 999999;
+} */
+
+/* Add crosshairs to the AC-130 gunship aiming sight */
+/* html::after {
+  content: "";
+  display: block;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  margin: -10px 0 0 -10px;
+  border-top: 10px solid #fff;
+  border-right: 10px solid transparent;
+  border-bottom: 10px solid transparent;
+  border-left: 10px solid #fff;
+  pointer-events: none;
+  z-index: 999999;
+} */
